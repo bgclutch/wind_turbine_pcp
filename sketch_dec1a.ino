@@ -3,13 +3,18 @@
 
 LiquidCrystal_I2C lcd(0x27, 16, 2);  
 
-const int sensorPin = A0;
+const int lightPin = A2;
+const int batteryPin = A1;
 const int ledPin = 13;
-const int threshold = 260;
+
+const int threshold = 400;
+const float dividerRatio = 3.0; 
 
 void setup() {
   Serial.begin(9600);
   pinMode(ledPin, OUTPUT);
+  pinMode(lightPin, INPUT);
+  pinMode(batteryPin, INPUT);
 
   lcd.init();          
   lcd.backlight();     
@@ -23,14 +28,21 @@ void setup() {
 }
 
 void loop() {
-  int sensorValue = analogRead(sensorPin);
+  int lightValue = analogRead(lightPin);
+  int voltRaw = analogRead(batteryPin);
+  Serial.println(lightValue);
+  Serial.println(voltRaw);
+  Serial.println();
   
-  float voltage = sensorValue * (5.0 / 1023.0);
+  float voltage = ((float)voltRaw / 1023.0) * 5 * dividerRatio;
   
-  int percent = map(sensorValue, 0, 1023, 0, 100);
+  int percent = map(voltage * 100, 1100, 1450, 0, 100);
+  
+  if (percent < 0) percent = 0;
+  if (percent > 100) percent = 100;
 
   bool isLedOn = false;
-  if (sensorValue < threshold) {
+  if (lightValue > threshold) {
     digitalWrite(ledPin, HIGH);
     isLedOn = true;
   } else {
